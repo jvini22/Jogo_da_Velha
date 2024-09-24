@@ -1,15 +1,17 @@
 import sys
 import random
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QGridLayout, QMessageBox, QMainWindow, QAction, QComboBox
-from PyQt5.QtGui import QIcon, QFont
+from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QLabel, QGridLayout, QMessageBox, QMainWindow, QComboBox
+from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt, QTimer
 
 class JogoDaVelhaGUI(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.initUI()
+        self.placar_X = 0  # Placar para o jogador X
+        self.placar_O = 0  # Placar para o jogador O
+        self.setup_UI()  # Inicializa a interface de forma mais organizada
 
-    def initUI(self):
+    def setup_UI(self):
         self.setWindowTitle('Jogo da Velha')
         self.setFixedSize(600, 800)
 
@@ -20,9 +22,21 @@ class JogoDaVelhaGUI(QMainWindow):
         self.tabuleiro = [[' ']*3 for _ in range(3)]
         self.jogador_atual = 'X'  # Jogador começa como 'X'
         self.modo_vs_cpu = False
-        self.dificuldade_cpu = 'Fácil'  # Definição inicial da dificuldade da CPU
+        self.dificuldade_cpu = 'Fácil'
+
+        self.placar_label = QLabel(f"Placar - X: {self.placar_X} | O: {self.placar_O}")
+        self.placar_label.setFont(QFont('Arial', 16))
+        self.placar_label.setAlignment(Qt.AlignCenter)
+        self.v_layout.addWidget(self.placar_label)
+
+        self.info_label = QLabel()  # Cria uma vez e apenas atualiza durante o jogo
+        self.info_label.setFont(QFont('Arial', 16))
+        self.info_label.setAlignment(Qt.AlignCenter)
 
         self.menu_inicial()
+
+    def atualizar_placar(self):
+        self.placar_label.setText(f"Placar - X: {self.placar_X} | O: {self.placar_O}")
 
     def menu_inicial(self):
         self.limpar_layout()
@@ -36,11 +50,6 @@ class JogoDaVelhaGUI(QMainWindow):
         self.btn_jogar.setFont(QFont('Arial', 16))
         self.btn_jogar.clicked.connect(self.selecionar_modo)
         self.v_layout.addWidget(self.btn_jogar)
-
-        self.btn_dificuldade = QPushButton('Selecionar Dificuldade', self)
-        self.btn_dificuldade.setFont(QFont('Arial', 16))
-        self.btn_dificuldade.clicked.connect(self.selecionar_dificuldade)
-        self.v_layout.addWidget(self.btn_dificuldade)
 
         self.btn_temas = QPushButton('Escolher Tema', self)
         self.btn_temas.setFont(QFont('Arial', 16))
@@ -57,7 +66,7 @@ class JogoDaVelhaGUI(QMainWindow):
 
         self.btn_vs_cpu = QPushButton('Jogar contra CPU', self)
         self.btn_vs_cpu.setFont(QFont('Arial', 16))
-        self.btn_vs_cpu.clicked.connect(self.iniciar_jogo_vs_cpu)
+        self.btn_vs_cpu.clicked.connect(self.selecionar_dificuldade)
         self.v_layout.addWidget(self.btn_vs_cpu)
 
         self.btn_vs_jogador = QPushButton('Jogar contra Jogador', self)
@@ -79,9 +88,14 @@ class JogoDaVelhaGUI(QMainWindow):
         dificuldade.currentTextChanged.connect(self.definir_dificuldade)
         self.v_layout.addWidget(dificuldade)
 
+        iniciar_btn = QPushButton('Iniciar Jogo', self)
+        iniciar_btn.setFont(QFont('Arial', 16))
+        iniciar_btn.clicked.connect(self.iniciar_jogo_vs_cpu)
+        self.v_layout.addWidget(iniciar_btn)
+
         voltar_btn = QPushButton('Voltar', self)
         voltar_btn.setFont(QFont('Arial', 16))
-        voltar_btn.clicked.connect(self.menu_inicial)
+        voltar_btn.clicked.connect(self.selecionar_modo)
         self.v_layout.addWidget(voltar_btn)
 
     def definir_dificuldade(self, dificuldade):
@@ -102,10 +116,8 @@ class JogoDaVelhaGUI(QMainWindow):
     def iniciar_jogo(self):
         self.limpar_layout()
 
-        # Informação sobre o jogador atual
-        self.info_label = QLabel(f"Vez do jogador {self.jogador_atual}", self)
-        self.info_label.setFont(QFont('Arial', 16))
-        self.info_label.setAlignment(Qt.AlignCenter)
+        # Informação sobre o jogador atual já foi criada no __init__, agora só atualizamos
+        self.info_label.setText(f"Vez do jogador {self.jogador_atual}")
         self.v_layout.addWidget(self.info_label)
 
         # Layout para o tabuleiro
@@ -209,40 +221,36 @@ class JogoDaVelhaGUI(QMainWindow):
         return False
 
     def verificar_empate(self):
-        for linha in self.tabuleiro:
-            if ' ' in linha:
-                return False
-        return True
+        return all(self.tabuleiro[i][j] != ' ' for i in range(3) for j in range(3))
 
-    def mostrar_vencedor(self, vencedor):
-        QMessageBox.information(self, 'Fim de jogo', f'O jogador {vencedor} venceu!')
-        self.desativar_botoes()
+    def mostrar_vencedor(self, jogador):
+        QMessageBox.information(self, 'Fim de Jogo', f'Jogador {jogador} venceu!')
+        if jogador == 'X':
+            self.placar_X += 1
+        else:
+            self.placar_O += 1
+        self.atualizar_placar()
+        QTimer.singleShot(1000, self.reiniciar_jogo)
 
     def mostrar_empate(self):
-        QMessageBox.information(self, 'Fim de jogo', 'O jogo terminou em empate!')
-        self.desativar_botoes()
-
-    def desativar_botoes(self):
-        for i in range(3):
-            for j in range(3):
-                self.botoes[i][j].setEnabled(False)
+        QMessageBox.information(self, 'Fim de Jogo', 'O jogo terminou empatado!')
+        QTimer.singleShot(1000, self.reiniciar_jogo)
 
     def reiniciar_jogo(self):
         self.tabuleiro = [[' ']*3 for _ in range(3)]
-        self.jogador_atual = 'X'
         for i in range(3):
             for j in range(3):
                 self.botoes[i][j].setText('')
-                self.botoes[i][j].setEnabled(True)
 
     def limpar_layout(self):
         while self.v_layout.count():
-            child = self.v_layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
+            item = self.v_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ex = JogoDaVelhaGUI()
-    ex.show()
+    jogo = JogoDaVelhaGUI()
+    jogo.show()
     sys.exit(app.exec_())
