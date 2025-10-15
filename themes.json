@@ -1,0 +1,22 @@
+{
+    "dark": {
+        "bg": "#1a252f",
+        "grid_bg": "#2c3e50",
+        "cell_bg": "#34495e",
+        "text": "#ecf0f1",
+        "x": "#3498db",
+        "o": "#e74c3c",
+        "btn": "#3498db",
+        "btn_hover": "#2980b9"
+    },
+    "light": {
+        "bg": "#ecf0f1",
+        "grid_bg": "#bdc3c7",
+        "cell_bg": "#ffffff",
+        "text": "#2c3e50",
+        "x": "#2980b9",
+        "o": "#c0392b",
+        "btn": "#2980b9",
+        "btn_hover": "#3498db"
+    }
+}
